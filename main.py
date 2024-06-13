@@ -1,4 +1,4 @@
-from core.cinema import Cinema
+from core.cinema import CinemaClient
 
 
 class CinemaCLI:
@@ -15,15 +15,15 @@ class CinemaCLI:
             )
 
     def list_screenings(self):
-        screenings = self.cinema.get_all_screenings()
-        reserved_screenings = self.cinema.get_all_reserved_screening_ids()
+        screenings = self.client.get_all_screenings()
+        reserved_screenings = self.client.get_all_reserved_screening_ids()
 
         print("\nAll the screenings:")
         self.print_screenings(screenings, reserved_screenings)
 
     def make_reservation(self):
-        screenings = self.cinema.get_all_screenings()
-        reserved_screenings = self.cinema.get_all_reserved_screening_ids()
+        screenings = self.client.get_all_screenings()
+        reserved_screenings = self.client.get_all_reserved_screening_ids()
 
         available_screenings = [
             screening
@@ -50,7 +50,7 @@ class CinemaCLI:
             if not -1 < index < len(available_screenings):
                 raise ValueError()
 
-            self.cinema.make_reservation(available_screenings[index].screening_id)
+            self.client.make_reservation(available_screenings[index].screening_id)
             print("The reservation was made successfully.")
         except ValueError:
             print("Invalid choice.")
@@ -63,13 +63,11 @@ class CinemaCLI:
             return
 
         mapped = [
-            screenings[
-                next(
-                    i
-                    for i, v in enumerate(screenings)
-                    if v.screening_id == reservation.screening_id
-                )
-            ]
+            next(
+                screening
+                for screening in screenings
+                if screening.screening_id == reservation.screening_id
+            )
             for reservation in reservations
         ]
 
@@ -77,14 +75,14 @@ class CinemaCLI:
         self.print_screenings(mapped)
 
     def list_reservations(self):
-        reservations = self.cinema.get_own_reservations()
-        screenings = self.cinema.get_all_screenings()
+        reservations = self.client.get_own_reservations()
+        screenings = self.client.get_all_screenings()
 
         self.print_reservations(reservations, screenings)
 
     def cancel_reservation(self):
-        reservations = self.cinema.get_own_reservations()
-        screenings = self.cinema.get_all_screenings()
+        reservations = self.client.get_own_reservations()
+        screenings = self.client.get_all_screenings()
 
         self.print_reservations(reservations, screenings)
 
@@ -107,7 +105,7 @@ class CinemaCLI:
             if not -1 < index < len(reservations):
                 raise ValueError()
 
-            self.cinema.cancel_reservation(reservations[index].screening_id)
+            self.client.cancel_reservation(reservations[index].screening_id)
             print("The reservation was cancelled successfully.")
         except ValueError:
             print("Invalid choice.")
@@ -116,7 +114,7 @@ class CinemaCLI:
         print("Welcome to the Cinema Malta reservation system!")
         user_id = input("Please, enter your User ID: ")
         print("Logging in...")
-        self.cinema = Cinema(user_id)
+        self.client = CinemaClient(user_id)
 
         while True:
             options = (

@@ -40,6 +40,19 @@ python init.py
 python main.py
 ```
 
+### 6. Run the stress tests
+
+```bash
+python init.py
+python stress_test.py 1
+
+python init.py
+python stress_test.py 2
+
+python init.py
+python stress_test.py 3
+```
+
 ## Database schema
 
 ```sql
@@ -54,14 +67,18 @@ CREATE TABLE cinema.screenings (
     title TEXT
 );
 
-CREATE TABLE cinema.reservations (
-    reservation_id UUID PRIMARY KEY,
-    screening_id UUID,
+CREATE TABLE cinema.reservations_by_user (
     user_id TEXT,
-    ticket_number INT
+    screening_id UUID,
+    PRIMARY KEY(user_id, screening_id)
+);
+
+CREATE TABLE cinema.reservations_by_screening (
+    screening_id UUID PRIMARY KEY,
+    user_id TEXT
 );
 ```
 
 ## Encountered problems
 
-The approach to working with a _distributed database_ is highly different from the one with a _relational database_. _Cassandra Query Language_ imposes a lot of restrictions compared to regular _SQL_.
+The approach to working with a _distributed database_ is highly different from the one with a _relational database_. _Cassandra Query Language_ imposes a lot of restrictions compared to regular _SQL_. Used Cassandra's _lightweight batches_ to address _consistency_ problems.

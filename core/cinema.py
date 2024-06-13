@@ -3,7 +3,7 @@ from uuid import UUID
 from .helpers import get_cassandra_session
 
 
-class Cinema:
+class CinemaClient:
     def __init__(self, user_id: str) -> None:
         self.session = get_cassandra_session()
         self.user_id = user_id
