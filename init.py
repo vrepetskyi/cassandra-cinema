@@ -17,12 +17,12 @@ def create_schema(session: Session):
     WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'};
     """)
 
-    print('Creating the "screening_times" table...')
+    print('Creating the "screenings" table...')
     session.execute("""
-    CREATE TABLE cinema.screening_times (
-        screening_time_id UUID PRIMARY KEY,
-        date TEXT,
-        time TEXT,
+    CREATE TABLE cinema.screenings (
+        screening_id UUID PRIMARY KEY,
+        screening_date TEXT,
+        screening_time TEXT,
         room TEXT,
         title TEXT
     );
@@ -32,28 +32,29 @@ def create_schema(session: Session):
     session.execute("""
     CREATE TABLE cinema.reservations (
         reservation_id UUID PRIMARY KEY,
-        screening_time_id UUID,
-        user_id TEXT
+        screening_id UUID,
+        user_id TEXT,
+        ticket_number INT
     );
     """)
 
 
 def load_data(session: Session):
-    SCREENING_TIMES_CSV = "data/screening_times.csv"
+    screeningS_CSV = "data/screenings.csv"
 
-    if not os.path.exists(SCREENING_TIMES_CSV):
+    if not os.path.exists(screeningS_CSV):
         raise FileNotFoundError("Screening time data is not found")
 
-    df = pd.read_csv(SCREENING_TIMES_CSV)
+    df = pd.read_csv(screeningS_CSV)
 
     print("Inserting the new data...")
     for row in df.itertuples():
         session.execute(
             """
-            INSERT INTO cinema.screening_times (
-                screening_time_id,
-                date,
-                time,
+            INSERT INTO cinema.screenings (
+                screening_id,
+                screening_date,
+                screening_time,
                 room,
                 title
             )

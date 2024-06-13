@@ -2,94 +2,102 @@ from core.cinema import Cinema
 
 
 class CinemaCLI:
-    def print_screening_times(self, screening_times, check_availability=False):
-        for index, screening_time in enumerate(screening_times):
+    def print_screenings(self, screenings, check_availability=False):
+        for index, screening in enumerate(screenings):
             print(
-                "#%02d | %s | %s | %-12s | %s" % (index + 1, *screening_time[1:])
+                "#%02d | %s | %s | %-12s | %s" % (index + 1, *screening[1:])
                 + (
                     " — SOLD OUT"
                     if check_availability
-                    and not self.cinema.is_screening_time_available(
-                        screening_time.screening_time_id
-                    )
+                    and not self.cinema.is_screening_available(screening.screening_id)
                     else ""
                 )
             )
 
-    def list_screening_times(self):
-        screening_times = self.cinema.get_all_screening_times()
+    def list_screenings(self):
+        screenings = self.cinema.get_all_screenings()
 
-        print("\nAll the screening times:")
-        self.print_screening_times(screening_times, check_availability=True)
+        print("\nAll the screenings:")
+        self.print_screenings(screenings, check_availability=True)
 
     def make_reservation(self):
-        screening_times = self.cinema.get_all_screening_times()
+        screenings = self.cinema.get_all_screenings()
 
-        available_screening_times = [
-            screening_time
-            for screening_time in screening_times
-            if self.cinema.is_screening_time_available(screening_time.screening_time_id)
+        available_screenings = [
+            screening
+            for screening in screenings
+            if self.cinema.is_screening_available(screening.screening_id)
         ]
 
-        print("\nAvailable screening times:")
-        self.print_screening_times(available_screening_times)
+        print("\nAvailable screenings:")
+        self.print_screenings(available_screenings)
 
         try:
-            print("\n#00 | Abort and go back")
-            index = int(input("\nEnter the number of a screening time: ")) - 1
+            index = (
+                int(
+                    input(
+                        "\nEnter the number of a screening to reserve (0 to abort and go back): "
+                    )
+                )
+                - 1
+            )
 
             if index == -1:
                 return
 
-            if not -1 < index < len(available_screening_times):
+            if not -1 < index < len(available_screenings):
                 raise ValueError()
 
-            self.cinema.make_reservation(
-                available_screening_times[index].screening_time_id
-            )
+            self.cinema.make_reservation(available_screenings[index].screening_id)
             print("The reservation was made successfully.")
         except ValueError:
             print("Invalid choice.")
 
-    def print_reservations(self, reservations, screening_times):
+    def print_reservations(self, reservations, screenings):
         print()
 
         if not reservations:
-            print("NO RESERVATIONS")
+            print("You have no reservations.")
             return
 
         mapped = [
-            screening_times[
+            screenings[
                 next(
                     i
-                    for i, v in enumerate(screening_times)
-                    if v.screening_time_id == reservation.screening_time_id
+                    for i, v in enumerate(screenings)
+                    if v.screening_id == reservation.screening_id
                 )
             ]
             for reservation in reservations
         ]
 
         print("Your reservations:")
-        self.print_screening_times(mapped)
+        self.print_screenings(mapped)
 
     def list_reservations(self):
         reservations = self.cinema.get_reservations()
-        screening_times = self.cinema.get_all_screening_times()
+        screenings = self.cinema.get_all_screenings()
 
-        self.print_reservations(reservations, screening_times)
+        self.print_reservations(reservations, screenings)
 
     def cancel_reservation(self):
         reservations = self.cinema.get_reservations()
-        screening_times = self.cinema.get_all_screening_times()
+        screenings = self.cinema.get_all_screenings()
 
-        self.print_reservations(reservations, screening_times)
+        self.print_reservations(reservations, screenings)
 
         if not reservations:
             return
 
         try:
-            print("\n#00 | Abort and go back")
-            index = int(input("\nEnter the number of a reservation: ")) - 1
+            index = (
+                int(
+                    input(
+                        "\nEnter the number of a reservation to cancel (0 to abort and go back): "
+                    )
+                )
+                - 1
+            )
 
             if index == -1:
                 return
@@ -110,7 +118,7 @@ class CinemaCLI:
 
         while True:
             options = (
-                ("List all the screening times", self.list_screening_times),
+                ("List all the screenings", self.list_screenings),
                 ("Make a reservation", self.make_reservation),
                 ("List my reservations", self.list_reservations),
                 ("Cancel a reservation", self.cancel_reservation),

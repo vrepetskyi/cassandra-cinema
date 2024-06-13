@@ -10,45 +10,46 @@ class Cinema:
         self.session = get_cassandra_session()
         self.user_id = user_id
 
-    def get_all_screening_times(self):
-        return list(
+    def get_all_screenings(self):
+        return sorted(
             self.session.execute("""
             SELECT
-                screening_time_id,
-                date,
-                time,
+                screening_id,
+                screening_date,
+                screening_time,
                 room,
                 title
-            FROM cinema.screening_times;
-            """)
+            FROM cinema.screenings;
+            """),
+            key=lambda x: x.screening_date,
         )
 
-    def is_screening_time_available(self, screening_time_id: UUID):
+    def is_screening_available(self, screening_id: UUID):
         return (
             self.session.execute(
                 """
-            SELECT COUNT(*) 
-            FROM cinema.reservations 
-            WHERE screening_time_id = %s ALLOW FILTERING
-            """,
-                (screening_time_id,),
+                SELECT COUNT(*) 
+                FROM cinema.reservations 
+                WHERE screening_id = %s ALLOW FILTERING
+                """,
+                (screening_id,),
             )[0][0]
             < Cinema.MAX_RESERVATIONS
         )
 
-    def make_reservation(self, screening_time_id: UUID):
+    def make_reservation(self, screening_id: UUID):
         self.session.execute(
             """
             INSERT INTO cinema.reservations (
                 reservation_id,
-                screening_time_id,
+                screening_id,
                 user_id
             )
             VALUES (%s, %s, %s);
             """,
             (
                 uuid4(),
-                screening_time_id,
+                screening_id,
                 self.user_id,
             ),
         )
@@ -57,7 +58,7 @@ class Cinema:
         return list(
             self.session.execute(
                 """
-                SELECT reservation_id, screening_time_id
+                SELECT reservation_id, screening_id
                 FROM cinema.reservations
                 WHERE user_id = %s ALLOW FILTERING;
                 """,

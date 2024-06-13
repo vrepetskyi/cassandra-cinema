@@ -7,8 +7,8 @@ def scrape():
     res = requests.get("https://www.kinomalta.pl/seanse")
     soup = bs4.BeautifulSoup(res.content, features="html.parser")
 
-    screening_times = soup.find(class_="screening-times")
-    tags: list[bs4.Tag] = screening_times.find_all(class_=["today-date", "movie-link"])
+    screenings = soup.find(class_="screening-times")
+    tags: list[bs4.Tag] = screenings.find_all(class_=["today-date", "movie-link"])
 
     entries = []
     current_date = None
@@ -30,7 +30,7 @@ def scrape():
         )
     df = pd.DataFrame(entries, columns=("date", "time", "room", "title"))
 
-    df.to_csv("screening_times.csv")
+    df.to_csv("data/screenings.csv")
 
 
 if __name__ == "__main__":
