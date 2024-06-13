@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from .helpers import get_cassandra_session
 
@@ -36,15 +36,13 @@ class CinemaClient:
             """
             INSERT INTO cinema.reservations_by_screening (
                 screening_id,
-                user_id
+                user_id,
+                reservation_id
             )
-            VALUES (%s, %s)
+            VALUES (%s, %s, %s)
             IF NOT EXISTS;
             """,
-            (
-                screening_id,
-                self.user_id,
-            ),
+            (screening_id, self.user_id, uuid4()),
         )
 
         if res.was_applied:
@@ -52,14 +50,12 @@ class CinemaClient:
                 """
                 INSERT INTO cinema.reservations_by_user (
                     user_id,
-                    screening_id
-                )
-                VALUES (%s, %s);
-                """,
-                (
-                    self.user_id,
                     screening_id,
-                ),
+                    reservation_id
+                )
+                VALUES (%s, %s, %s);
+                """,
+                (self.user_id, screening_id, uuid4()),
             )
 
     def get_own_reservations(self):

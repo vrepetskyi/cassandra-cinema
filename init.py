@@ -33,6 +33,7 @@ def create_schema(session: Session):
     CREATE TABLE cinema.reservations_by_user (
         user_id TEXT,
         screening_id UUID,
+        reservation_id UUID,
         PRIMARY KEY(user_id, screening_id)
     );
     """)
@@ -41,7 +42,8 @@ def create_schema(session: Session):
     session.execute("""
     CREATE TABLE cinema.reservations_by_screening (
         screening_id UUID PRIMARY KEY,
-        user_id TEXT
+        user_id TEXT,
+        reservation_id UUID
     );
     """)
 
