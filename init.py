@@ -28,13 +28,20 @@ def create_schema(session: Session):
     );
     """)
 
-    print('Creating the "reservations" table...')
+    print('Creating the "reservations_by_user" table...')
     session.execute("""
-    CREATE TABLE cinema.reservations (
-        reservation_id UUID PRIMARY KEY,
-        screening_id UUID,
+    CREATE TABLE cinema.reservations_by_user (
         user_id TEXT,
-        ticket_number INT
+        screening_id UUID,
+        PRIMARY KEY(user_id, screening_id)
+    );
+    """)
+
+    print('Creating the "reservations_by_screening" table...')
+    session.execute("""
+    CREATE TABLE cinema.reservations_by_screening (
+        screening_id UUID PRIMARY KEY,
+        user_id TEXT
     );
     """)
 

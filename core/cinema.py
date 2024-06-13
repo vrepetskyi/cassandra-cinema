@@ -1,76 +1,92 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from .helpers import get_cassandra_session
 
 
 class Cinema:
-    MAX_RESERVATIONS = 3
-
     def __init__(self, user_id: str) -> None:
         self.session = get_cassandra_session()
         self.user_id = user_id
 
     def get_all_screenings(self):
+        all_screenings = self.session.execute("""
+        SELECT
+            screening_id,
+            screening_date,
+            screening_time,
+            room,
+            title
+        FROM cinema.screenings;
+        """)
+
         return sorted(
-            self.session.execute("""
-            SELECT
-                screening_id,
-                screening_date,
-                screening_time,
-                room,
-                title
-            FROM cinema.screenings;
-            """),
+            all_screenings,
             key=lambda x: x.screening_date,
         )
 
-    def is_screening_available(self, screening_id: UUID):
-        return (
-            self.session.execute(
-                """
-                SELECT COUNT(*) 
-                FROM cinema.reservations 
-                WHERE screening_id = %s ALLOW FILTERING
-                """,
-                (screening_id,),
-            )[0][0]
-            < Cinema.MAX_RESERVATIONS
+    def get_all_reserved_screening_ids(self):
+        reserved_ids = self.session.execute(
+            "SELECT screening_id FROM cinema.reservations_by_user;"
         )
 
+        return set(map(lambda x: x.screening_id, reserved_ids))
+
     def make_reservation(self, screening_id: UUID):
-        self.session.execute(
+        res = self.session.execute(
             """
-            INSERT INTO cinema.reservations (
-                reservation_id,
+            INSERT INTO cinema.reservations_by_screening (
                 screening_id,
                 user_id
             )
-            VALUES (%s, %s, %s);
+            VALUES (%s, %s)
+            IF NOT EXISTS;
             """,
             (
-                uuid4(),
                 screening_id,
                 self.user_id,
             ),
         )
 
-    def get_reservations(self):
+        if res.was_applied:
+            self.session.execute(
+                """
+                INSERT INTO cinema.reservations_by_user (
+                    user_id,
+                    screening_id
+                )
+                VALUES (%s, %s);
+                """,
+                (
+                    self.user_id,
+                    screening_id,
+                ),
+            )
+
+    def get_own_reservations(self):
         return list(
             self.session.execute(
                 """
-                SELECT reservation_id, screening_id
-                FROM cinema.reservations
-                WHERE user_id = %s ALLOW FILTERING;
+                SELECT screening_id
+                FROM cinema.reservations_by_user
+                WHERE user_id = %s;
                 """,
                 (self.user_id,),
             )
         )
 
-    def cancel_reservation(self, reservation_id: UUID):
+    def cancel_reservation(self, screening_id: UUID):
         self.session.execute(
             """
-            DELETE FROM cinema.reservations
-            WHERE reservation_id = %s;
+            DELETE FROM cinema.reservations_by_screening
+            WHERE screening_id = %s;
             """,
-            (reservation_id,),
+            (screening_id,),
+        )
+
+        self.session.execute(
+            """
+            DELETE FROM cinema.reservations_by_user
+            WHERE user_id = %s AND screening_id = %s;
+            """,
+            (self.user_id, screening_id),
         )

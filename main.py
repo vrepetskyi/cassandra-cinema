@@ -2,31 +2,33 @@ from core.cinema import Cinema
 
 
 class CinemaCLI:
-    def print_screenings(self, screenings, check_availability=False):
+    def print_screenings(self, screenings, reserved_screenings=None):
         for index, screening in enumerate(screenings):
             print(
                 "#%02d | %s | %s | %-12s | %s" % (index + 1, *screening[1:])
                 + (
                     " — SOLD OUT"
-                    if check_availability
-                    and not self.cinema.is_screening_available(screening.screening_id)
+                    if reserved_screenings
+                    and screening.screening_id in reserved_screenings
                     else ""
                 )
             )
 
     def list_screenings(self):
         screenings = self.cinema.get_all_screenings()
+        reserved_screenings = self.cinema.get_all_reserved_screening_ids()
 
         print("\nAll the screenings:")
-        self.print_screenings(screenings, check_availability=True)
+        self.print_screenings(screenings, reserved_screenings)
 
     def make_reservation(self):
         screenings = self.cinema.get_all_screenings()
+        reserved_screenings = self.cinema.get_all_reserved_screening_ids()
 
         available_screenings = [
             screening
             for screening in screenings
-            if self.cinema.is_screening_available(screening.screening_id)
+            if screening.screening_id not in reserved_screenings
         ]
 
         print("\nAvailable screenings:")
@@ -75,13 +77,13 @@ class CinemaCLI:
         self.print_screenings(mapped)
 
     def list_reservations(self):
-        reservations = self.cinema.get_reservations()
+        reservations = self.cinema.get_own_reservations()
         screenings = self.cinema.get_all_screenings()
 
         self.print_reservations(reservations, screenings)
 
     def cancel_reservation(self):
-        reservations = self.cinema.get_reservations()
+        reservations = self.cinema.get_own_reservations()
         screenings = self.cinema.get_all_screenings()
 
         self.print_reservations(reservations, screenings)
@@ -105,7 +107,7 @@ class CinemaCLI:
             if not -1 < index < len(reservations):
                 raise ValueError()
 
-            self.cinema.cancel_reservation(reservations[index].reservation_id)
+            self.cinema.cancel_reservation(reservations[index].screening_id)
             print("The reservation was cancelled successfully.")
         except ValueError:
             print("Invalid choice.")
